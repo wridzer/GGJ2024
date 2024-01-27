@@ -6,6 +6,14 @@
 #include "GameFramework/Pawn.h"
 #include "CharacterPawn.generated.h"
 
+UENUM()
+enum TongueState
+{
+	Retracted,
+	Shot,
+	Retracting
+};
+
 UCLASS()
 class BUFFROGSUITROEPTEKEN_API ACharacterPawn : public APawn
 {
@@ -23,8 +31,6 @@ public:
 	class UStaticMeshComponent* mouthHolder;
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* tongue;
-	//UPROPERTY(EditAnywhere)
-	//class UProjectileMovementComponent* ProjectileMovementComponent;
 	UPROPERTY(EditAnywhere)
 	class UPhysicsConstraintComponent* PhysicsConstraint;
 
@@ -34,6 +40,8 @@ public:
 	float TongRetractSpeed = 100.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tong parameters")
 	float TongMaxLength = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tong parameters")
+	float TongMinLength = 5.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
 	float MovementSpeed = 100.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
@@ -50,12 +58,22 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+
 private:
 
-	// Movement methods
+	// Input methods
 	void MoveHorizontal(float Value);
 	void MoveVertical(float Value);
+	void ShootTongue();
+	void StartGrab();
+	void StopGrab();
+	void RetractTongue();
+	void StopRetracting();
 
-	// Current velocity
+	TongueState TongueState = TongueState::Retracted;
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void ResetTongue();
+
 	FVector2D CurrentVelocity;
+	float tongueLimit = 0.0f;
 };
