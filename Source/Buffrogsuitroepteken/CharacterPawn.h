@@ -15,16 +15,16 @@ public:
 	// Sets default values for this pawn's properties
 	ACharacterPawn();
 
-	UPROPERTY(EditDefaultsOnly)
-	class UStaticMeshComponent* mainBody;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	class USkeletalMeshComponent* mainBody;
+	UPROPERTY(VisibleAnywhere)
+	class USphereComponent* SphereComponent;
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* mouthHolder;
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* tongue;
 	//UPROPERTY(EditAnywhere)
 	//class UProjectileMovementComponent* ProjectileMovementComponent;
-	//UPROPERTY(EditAnywhere)
-	//class UCableComponent* cable;
 	UPROPERTY(EditAnywhere)
 	class UPhysicsConstraintComponent* PhysicsConstraint;
 

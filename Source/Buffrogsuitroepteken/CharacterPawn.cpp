@@ -4,6 +4,9 @@
 #include "CharacterPawn.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values
 ACharacterPawn::ACharacterPawn()
@@ -11,9 +14,15 @@ ACharacterPawn::ACharacterPawn()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	mainBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("body"));
-	SetRootComponent(mainBody);
+	// Create the sphere component and attach it to the root
+	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
+	SetRootComponent(SphereComponent);
+	SphereComponent->InitSphereRadius(32.0f);
+
+	mainBody = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("body"));
+	mainBody->SetupAttachment(SphereComponent);
 	mainBody->SetSimulatePhysics(true);
+	mainBody->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
 
 	mouthHolder = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("mouth"));
 	mouthHolder->SetupAttachment(mainBody);
