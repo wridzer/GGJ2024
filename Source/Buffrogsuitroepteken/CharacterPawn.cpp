@@ -2,9 +2,11 @@
 
 
 #include "CharacterPawn.h"
-#include "CableComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values
 ACharacterPawn::ACharacterPawn()
@@ -12,8 +14,15 @@ ACharacterPawn::ACharacterPawn()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	mainBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("body"));
-	SetRootComponent(mainBody);
+	// Create the sphere component and attach it to the root
+	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
+	SetRootComponent(SphereComponent);
+	SphereComponent->InitSphereRadius(32.0f);
+
+	mainBody = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("body"));
+	mainBody->SetupAttachment(SphereComponent);
+	mainBody->SetSimulatePhysics(true);
+	mainBody->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
 
 	mouthHolder = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("mouth"));
 	mouthHolder->SetupAttachment(mainBody);
@@ -61,16 +70,27 @@ void ACharacterPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
 	// Update de positie van de Pawn
 	if (!CurrentVelocity.IsZero())
 	{
+		// Normalize input
+		FVector2D InputVector(CurrentVelocity.X, CurrentVelocity.Y);
+		InputVector = InputVector.GetSafeNormal();
+		FVector MovementDirection = FVector(InputVector.X, InputVector.Y, 0);
+
+		// Apply movement
 		FVector NewLocation = GetActorLocation() + FVector(
-			CurrentVelocity.X * MovementSpeed * DeltaTime,
-			CurrentVelocity.Y * MovementSpeed * DeltaTime,
+			InputVector.X * MovementSpeed * DeltaTime,
+			InputVector.Y * MovementSpeed * DeltaTime,
 			0
 		);
 		SetActorLocation(NewLocation);
+
+		// Rotate with velocity
+		FRotator NewRotation = MovementDirection.Rotation();
+		FRotator CurrentRotation = GetActorRotation();
+		FRotator SmoothRotation = FMath::RInterpTo(CurrentRotation, NewRotation, DeltaTime, RotateSpeed);
+		SetActorRotation(SmoothRotation);
 	}
 }
 
