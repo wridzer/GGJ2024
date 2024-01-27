@@ -36,6 +36,8 @@ public:
 	float TongMaxLength = 500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
 	float MovementSpeed = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
+	float RotateSpeed = 100.0f;
 
 protected:
 	// Called when the game starts or when spawned

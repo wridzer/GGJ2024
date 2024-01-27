@@ -2,7 +2,6 @@
 
 
 #include "CharacterPawn.h"
-#include "CableComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 
@@ -14,6 +13,7 @@ ACharacterPawn::ACharacterPawn()
 
 	mainBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("body"));
 	SetRootComponent(mainBody);
+	mainBody->SetSimulatePhysics(true);
 
 	mouthHolder = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("mouth"));
 	mouthHolder->SetupAttachment(mainBody);
@@ -61,16 +61,27 @@ void ACharacterPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
 	// Update de positie van de Pawn
 	if (!CurrentVelocity.IsZero())
 	{
+		// Normalize input
+		FVector2D InputVector(CurrentVelocity.X, CurrentVelocity.Y);
+		InputVector = InputVector.GetSafeNormal();
+		FVector MovementDirection = FVector(InputVector.X, InputVector.Y, 0);
+
+		// Apply movement
 		FVector NewLocation = GetActorLocation() + FVector(
-			CurrentVelocity.X * MovementSpeed * DeltaTime,
-			CurrentVelocity.Y * MovementSpeed * DeltaTime,
+			InputVector.X * MovementSpeed * DeltaTime,
+			InputVector.Y * MovementSpeed * DeltaTime,
 			0
 		);
 		SetActorLocation(NewLocation);
+
+		// Rotate with velocity
+		FRotator NewRotation = MovementDirection.Rotation();
+		FRotator CurrentRotation = GetActorRotation();
+		FRotator SmoothRotation = FMath::RInterpTo(CurrentRotation, NewRotation, DeltaTime, RotateSpeed);
+		SetActorRotation(SmoothRotation);
 	}
 }
 
