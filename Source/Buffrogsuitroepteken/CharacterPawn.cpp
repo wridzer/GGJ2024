@@ -25,11 +25,11 @@ ACharacterPawn::ACharacterPawn()
 	mainBody->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
 
 	mouthHolder = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("mouth"));
-	mouthHolder->SetupAttachment(mainBody);
+	mouthHolder->SetupAttachment(SphereComponent);
 
 	// construct sphere component
 	tongue = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("tongue"));
-	tongue->SetupAttachment(mainBody);
+	tongue->SetupAttachment(SphereComponent);
 
 	PhysicsConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("PhysicsConstraint"));
 	PhysicsConstraint->SetupAttachment(mouthHolder);
