@@ -71,7 +71,9 @@ private:
 	void StopRetracting();
 
 	TongueState TongueState = TongueState::Retracted;
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	//UFUNCTION()
+	//void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	void ResetTongue();
 
 	FVector2D CurrentVelocity;

@@ -36,7 +36,7 @@ ACharacterPawn::ACharacterPawn()
 	tongue->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	tongue->SetNotifyRigidBodyCollision(true);
 	tongue->MoveIgnoreComponents.Add(SphereComponent);
-	tongue->OnComponentHit.AddDynamic(this, &ACharacterPawn::OnHit);
+	//tongue->OnComponentHit.AddDynamic(this, &ACharacterPawn::OnHit);
 
 	PhysicsConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("PhysicsConstraint"));
 	PhysicsConstraint->SetupAttachment(mouthHolder);
@@ -251,16 +251,16 @@ void ACharacterPawn::StopRetracting()
 		TongueState = Shot;
 }
 
-void ACharacterPawn::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
-{
-	if (OtherActor == GetOwner())
-		return;
-
-	tongueLimit = FVector::Distance(tongue->GetComponentLocation(), mouthHolder->GetComponentLocation());
-	PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueLimit);
-	PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
-	PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
-}
+//void ACharacterPawn::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+//{
+//	if (OtherActor == GetOwner())
+//		return;
+//
+//	tongueLimit = FVector::Distance(tongue->GetComponentLocation(), mouthHolder->GetComponentLocation());
+//	PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueLimit);
+//	PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
+//	PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
+//}
 
 AActor* ACharacterPawn::PerformHitCheck()
 {
