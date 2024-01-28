@@ -6,6 +6,14 @@
 #include "GameFramework/Pawn.h"
 #include "CharacterPawn.generated.h"
 
+UENUM()
+enum TongueState
+{
+	Retracted,
+	Shot,
+	Retracting
+};
+
 UCLASS()
 class BUFFROGSUITROEPTEKEN_API ACharacterPawn : public APawn
 {
@@ -15,16 +23,14 @@ public:
 	// Sets default values for this pawn's properties
 	ACharacterPawn();
 
-	UPROPERTY(EditDefaultsOnly)
-	class UStaticMeshComponent* mainBody;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	class USkeletalMeshComponent* mainBody;
+	UPROPERTY(VisibleAnywhere)
+	class USphereComponent* SphereComponent;
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* mouthHolder;
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* tongue;
-	//UPROPERTY(EditAnywhere)
-	//class UProjectileMovementComponent* ProjectileMovementComponent;
-	//UPROPERTY(EditAnywhere)
-	//class UCableComponent* cable;
 	UPROPERTY(EditAnywhere)
 	class UPhysicsConstraintComponent* PhysicsConstraint;
 
@@ -34,8 +40,12 @@ public:
 	float TongRetractSpeed = 100.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tong parameters")
 	float TongMaxLength = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tong parameters")
+	float TongMinLength = 5.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
 	float MovementSpeed = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
+	float RotateSpeed = 100.0f;
 
 protected:
 	// Called when the game starts or when spawned
@@ -48,12 +58,31 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+
 private:
 
-	// Movement methods
+	// Input methods
 	void MoveHorizontal(float Value);
 	void MoveVertical(float Value);
+	void ShootTongue();
+	void StartGrab();
+	void StopGrab();
+	void RetractTongue();
+	void StopRetracting();
 
-	// Current velocity
+	TongueState TongueState = TongueState::Retracted;
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void ResetTongue();
+
 	FVector2D CurrentVelocity;
+	float tongueLimit = 0.0f;
+
+	float RestLength = TongMaxLength;
+	float SpringStiffness = 1;
+	float Damping = 20;
+
+	// Grabbing
+	AActor* PerformHitCheck();
+	UPhysicsConstraintComponent* GrabConstraint;
+	AActor* GrabbedObject;
 };
