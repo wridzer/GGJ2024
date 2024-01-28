@@ -7,6 +7,9 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/SphereComponent.h"
+#include "Camera/CameraActor.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
 
 // Sets default values
 ACharacterPawn::ACharacterPawn()
@@ -50,6 +53,23 @@ ACharacterPawn::ACharacterPawn()
 void ACharacterPawn::BeginPlay()
 {
 	Super::BeginPlay();
+
+	for (TActorIterator<ACameraActor> It(GetWorld()); It; ++It)
+	{
+		ACameraActor* LevelCamera = *It;
+		if (LevelCamera)
+		{
+			// Assuming you only have one level camera, or this is your designated level camera
+			APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+			if (PlayerController)
+			{
+				// Set the level camera as the view target
+				PlayerController->SetViewTarget(LevelCamera);
+				break; // Exit the loop once the camera is found and set
+			}
+		}
+	}
+
 	tongueLimit = TongMinLength;
 	//tongue->SetRelativeLocation(mouthHolder->GetRelativeLocation()); // + FVector(0, TongMinLength, 0));
 	//tongue->SetSimulatePhysics(false);
