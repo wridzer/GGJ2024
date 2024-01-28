@@ -21,11 +21,11 @@ ACharacterPawn::ACharacterPawn()
 
 	mainBody = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("body"));
 	mainBody->SetupAttachment(SphereComponent);
-	mainBody->SetSimulatePhysics(true);
+	//mainBody->SetSimulatePhysics(true);
 	mainBody->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
 
 	mouthHolder = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("mouth"));
-	mouthHolder->SetupAttachment(SphereComponent);
+	mouthHolder->SetupAttachment(mainBody);
 
 	// construct sphere component
 	tongue = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("tongue"));
@@ -41,6 +41,9 @@ ACharacterPawn::ACharacterPawn()
 	PhysicsConstraint->SetLinearXLimit(LCM_Limited, 100.0f);
 	PhysicsConstraint->SetLinearYLimit(LCM_Limited, 100.0f);
 	PhysicsConstraint->SetLinearZLimit(LCM_Limited, 100.0f);
+	PhysicsConstraint->SetLinearPositionDrive(true, true, true);
+	PhysicsConstraint->SetLinearVelocityDrive(true, true, true);
+	PhysicsConstraint->SetLinearDriveParams(1.0f, 20.0f, 0.f);
 }
 
 // Called when the game starts or when spawned
@@ -49,18 +52,21 @@ void ACharacterPawn::BeginPlay()
 	Super::BeginPlay();
 	tongueLimit = TongMinLength;
 	//tongue->SetRelativeLocation(mouthHolder->GetRelativeLocation()); // + FVector(0, TongMinLength, 0));
-	tongue->SetSimulatePhysics(false);
-	tongue->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//tongue->SetSimulatePhysics(false);
+	//tongue->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueLimit);
 	PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
 	PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
-	tongue->AttachToComponent(SphereComponent, FAttachmentTransformRules::KeepWorldTransform);
+	//tongue->AttachToComponent(SphereComponent, FAttachmentTransformRules::KeepWorldTransform);
 }
 
 // Called every frame
 void ACharacterPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//if(TongueState == Shot)
+	//	PhysicsConstraintFunc(DeltaTime);
 
 	// Update de positie van de Pawn
 	if (!CurrentVelocity.IsZero())
@@ -88,15 +94,25 @@ void ACharacterPawn::Tick(float DeltaTime)
 	// Retracting
 	if (TongueState == Retracting)
 	{
+		tongue->SetPhysicsLinearVelocity(FVector::ZeroVector);
+
 		FVector NewLocation = FMath::Lerp(
 			tongue->GetComponentLocation(),
 			mouthHolder->GetComponentLocation(),
 			DeltaTime * TongRetractSpeed);
 		tongue->SetWorldLocation(NewLocation);
 
-		if (FVector::Distance(tongue->GetComponentLocation(), mouthHolder->GetComponentLocation()) <= TongMinLength)
+		float tongueDist = FVector::Distance(tongue->GetComponentLocation(), mouthHolder->GetComponentLocation());
+
+		if (tongueDist <= TongMinLength)
 		{
+			TongueState = Retracted;
 			ResetTongue();
+		}
+		else {
+			PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueDist);
+			PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueDist);
+			PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueDist);
 		}
 	}
 }
@@ -120,14 +136,14 @@ void ACharacterPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ACharacterPawn::ResetTongue()
 {	
-	tongue->SetSimulatePhysics(false);
-	tongue->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	tongue->AttachToComponent(SphereComponent, FAttachmentTransformRules::KeepWorldTransform);
+	//tongue->SetSimulatePhysics(false);
+	//tongue->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//tongue->AttachToComponent(SphereComponent, FAttachmentTransformRules::KeepWorldTransform);
 
-	tongueLimit = tongueLimit - TongRetractSpeed;
-	PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueLimit);
-	PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
-	PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
+	//tongueLimit = tongueLimit - TongRetractSpeed;
+	//PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueLimit);
+	//PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
+	//PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
 }
 
 void ACharacterPawn::MoveHorizontal(float Value)
@@ -146,15 +162,14 @@ void ACharacterPawn::ShootTongue()
 	{
 		TongueState = Shot;
 		tongue->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		tongue->SetupAttachment(SphereComponent);
 
 		tongueLimit = TongMaxLength;
-		PhysicsConstraint->SetLinearXLimit(LCM_Limited, tongueLimit);
-		PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
-		PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
+		PhysicsConstraint->SetLinearXLimit(LCM_Limited, TongMaxLength);
+		PhysicsConstraint->SetLinearYLimit(LCM_Limited, TongMaxLength);
+		PhysicsConstraint->SetLinearZLimit(LCM_Limited, TongMaxLength);
 
-		tongue->SetSimulatePhysics(true);
-		tongue->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		//tongue->SetSimulatePhysics(true);
+		//tongue->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		FVector ForwardDirection = GetActorForwardVector();
 		FVector impulse = ForwardDirection * TongEjectSpeed;
 		tongue->AddImpulse(impulse);
@@ -163,12 +178,37 @@ void ACharacterPawn::ShootTongue()
 
 void ACharacterPawn::StartGrab()
 {
+	// Perform hit check to find the object to grab
+	AActor* TargetObject = PerformHitCheck();
+	if (TargetObject)
+	{
+		// Create and configure the physics constraint
+		GrabConstraint = NewObject<UPhysicsConstraintComponent>(this);
+		GrabConstraint->AttachToComponent(tongue, FAttachmentTransformRules::KeepWorldTransform);
+		GrabConstraint->SetConstrainedComponents(tongue, NAME_None, Cast<UPrimitiveComponent>(TargetObject->GetRootComponent()), NAME_None);
 
+		// Additional configuration for the constraint as needed
+		// ...
+
+		// Keep a reference to the grabbed object
+		GrabbedObject = TargetObject;
+
+		// Activate the constraint
+		GrabConstraint->SetActive(true);
+	}
 }
 
 void ACharacterPawn::StopGrab()
 {
+	if (GrabbedObject)
+	{
+		// Disable or destroy the constraint
+		GrabConstraint->SetActive(false);
+		GrabConstraint->DestroyComponent();
 
+		// Reset the grabbed object reference
+		GrabbedObject = nullptr;
+	}
 }
 
 void ACharacterPawn::RetractTongue()
@@ -201,3 +241,45 @@ void ACharacterPawn::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor
 	PhysicsConstraint->SetLinearYLimit(LCM_Limited, tongueLimit);
 	PhysicsConstraint->SetLinearZLimit(LCM_Limited, tongueLimit);
 }
+
+AActor* ACharacterPawn::PerformHitCheck()
+{
+	FVector Start = GetActorLocation(); // or the location of the character's hand/viewpoint
+	FVector ForwardVector = GetActorForwardVector();
+	FVector End = ((ForwardVector * 10.f) + Start); // 1000.f is the distance of the sweep
+	FHitResult HitResult;
+
+	// Collision parameters
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this); // Ignore the character itself
+
+	// Sphere sweep radius
+	float SphereRadius = 5.0f; // Adjust the radius as needed
+
+	// Perform the sphere sweep
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		FQuat::Identity,
+		ECC_Visibility, // or your custom collision channel
+		FCollisionShape::MakeSphere(SphereRadius),
+		CollisionParams
+	);
+
+	if (bHit)
+	{
+		// Draw a debug sphere - useful for testing
+		DrawDebugSphere(GetWorld(), HitResult.Location, SphereRadius, 32, FColor::Green, false, 1, 0, 1);
+
+		// Return the hit actor
+		return HitResult.GetActor();
+	}
+	else
+	{
+		DrawDebugSphere(GetWorld(), HitResult.Location, SphereRadius, 32, FColor::Red, false, 1, 0, 1);
+		// No hit
+		return nullptr;
+	}
+}
+

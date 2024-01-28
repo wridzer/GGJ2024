@@ -76,4 +76,13 @@ private:
 
 	FVector2D CurrentVelocity;
 	float tongueLimit = 0.0f;
+
+	float RestLength = TongMaxLength;
+	float SpringStiffness = 1;
+	float Damping = 20;
+
+	// Grabbing
+	AActor* PerformHitCheck();
+	UPhysicsConstraintComponent* GrabConstraint;
+	AActor* GrabbedObject;
 };
