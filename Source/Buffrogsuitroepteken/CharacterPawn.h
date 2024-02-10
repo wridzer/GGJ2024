@@ -46,6 +46,10 @@ public:
 	float MovementSpeed = 100.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
 	float RotateSpeed = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
+	float JumpHight = 5.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "movement parameters")
+	float JumpGravity = 1.0f;
 
 protected:
 	// Called when the game starts or when spawned
@@ -64,6 +68,7 @@ private:
 	// Input methods
 	void MoveHorizontal(float Value);
 	void MoveVertical(float Value);
+	void jump();
 	void ShootTongue();
 	void StartGrab();
 	void StopGrab();
@@ -76,7 +81,7 @@ private:
 	//void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	void ResetTongue();
 
-	FVector2D CurrentVelocity;
+	FVector CurrentVelocity;
 	float tongueLimit = 0.0f;
 
 	float RestLength = TongMaxLength;

@@ -104,6 +104,8 @@ void ACharacterPawn::Tick(float DeltaTime)
 		);
 		SetActorLocation(NewLocation);
 
+		//CurrentVelocity.Z -= JumpGravity * DeltaTime;
+
 		// Rotate with velocity
 		FRotator NewRotation = MovementDirection.Rotation();
 		FRotator CurrentRotation = GetActorRotation();
@@ -145,6 +147,7 @@ void ACharacterPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	// Bind movement actions
 	PlayerInputComponent->BindAxis("MoveHorizontal", this, &ACharacterPawn::MoveHorizontal);
 	PlayerInputComponent->BindAxis("MoveVertical", this, &ACharacterPawn::MoveVertical);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacterPawn::jump);
 
 	// Bind button actions
 	PlayerInputComponent->BindAction("Shoot", IE_Pressed, this, & ACharacterPawn::ShootTongue);
@@ -174,6 +177,11 @@ void ACharacterPawn::MoveHorizontal(float Value)
 void ACharacterPawn::MoveVertical(float Value)
 {
 	CurrentVelocity.Y = Value;
+}
+
+void ACharacterPawn::jump()
+{
+	CurrentVelocity.Z = JumpHight;
 }
 
 void ACharacterPawn::ShootTongue()
